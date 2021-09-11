@@ -1,4 +1,4 @@
-package tokeniser
+package normalization
 
 import (
 	"regexp"
@@ -21,25 +21,9 @@ var (
 	_multipleWhitespaceMatcher = regexp.MustCompile(`\s+`)
 )
 
-type stringModificationChain []stringModificationFunc
+type normalizer func(s string) string
 
-// NewStringModificationChain creates a new chain of stringModificationFunc
-func NewStringModificationChain(fns ...stringModificationFunc) stringModificationChain {
-	return fns
-}
-
-// Modify modifies a string based on the modificationFuncs in the chain
-func (c stringModificationChain) Modify(s string) string {
-	for _, modifier := range c {
-		s = modifier.modify(s)
-	}
-
-	return s
-}
-
-type stringModificationFunc func(s string) string
-
-func (fn stringModificationFunc) modify(s string) string {
+func (fn normalizer) normalize(s string) string {
 	return fn(s)
 }
 

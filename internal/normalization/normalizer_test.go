@@ -1,4 +1,4 @@
-package tokeniser
+package normalization
 
 import (
 	"testing"

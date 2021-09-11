@@ -26,13 +26,23 @@ func ReadTextsFromFiles(paths []string) ([]string, error) {
 	texts := make([]string, 0, len(paths))
 
 	for _, path := range paths {
-		b, err := ioutil.ReadFile(path)
+		text, err := ReadTextFromFile(path)
 		if err != nil {
 			return nil, err
 		}
 
-		texts = append(texts, string(b))
+		texts = append(texts, text)
 	}
 
 	return texts, nil
+}
+
+// ReadTextFromFile reads a file from a given path and returns its contents
+func ReadTextFromFile(path string) (string, error) {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
 }

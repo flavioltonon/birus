@@ -2,11 +2,21 @@ package tokeniser
 
 import "strings"
 
+// Tokeniser is a document tokeniser
+type Tokeniser struct {
+	stopWords []string
+}
+
+// New creates a new Tokeniser with an option set of stopwords
+func New(stopWords ...string) *Tokeniser {
+	return &Tokeniser{stopWords: stopWords}
+}
+
 // Tokenise extracts tokens from a document
-func Tokenise(document string, stopWords ...string) []string {
+func (t *Tokeniser) Tokenise(document string) []string {
 	var tokens []string
 
-	stopWordsMap := mapWords(stopWords)
+	stopWordsMap := mapWords(t.stopWords)
 
 	for _, token := range strings.Split(document, " ") {
 		if _, exists := stopWordsMap[token]; exists {
