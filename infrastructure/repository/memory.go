@@ -3,8 +3,6 @@ package repository
 import (
 	"context"
 	"sync"
-
-	"github.com/flavioltonon/birus/domain/entity"
 )
 
 type MemoryRepository struct {
@@ -15,7 +13,7 @@ type MemoryRepository struct {
 func NewMemoryRepository() (*MemoryRepository, error) {
 	return &MemoryRepository{
 		Models: &ModelsMemoryRepository{
-			models: make(map[string]*entity.Model),
+			models: make(map[string]*Model),
 			mu:     new(sync.RWMutex),
 		},
 	}, nil

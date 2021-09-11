@@ -21,7 +21,7 @@ func (c *Controller) createModel(ctx *gin.Context) {
 		return
 	}
 
-	modelID, err := c.usecases.ImageClassification.CreateModel(ctx, req.Name, req.Images)
+	modelID, err := c.usecases.ImageClassification.CreateClassificationModel(ctx, req.Name, req.Images)
 	if err != nil {
 		logger.Log().Error("failed to create model", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, ctx.Error(errors.WithMessage(err, "failed to create model")))

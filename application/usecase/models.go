@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/flavioltonon/birus/domain/entity"
-	"github.com/james-bowman/nlp"
+	"github.com/flavioltonon/birus/internal/shingling"
 )
 
 // ModelsReader is a reader interface for Models
 type ModelsReader interface {
 	Get(ctx context.Context, modelID string) (*entity.Model, error)
-	List(ctx context.Context) ([]entity.Model, error)
+	List(ctx context.Context) ([]*entity.Model, error)
 }
 
 // ModelsWriter is a writer interface for Models
@@ -27,6 +27,6 @@ type ModelsRepository interface {
 // ModelsUsecase interface
 type ModelsUsecase interface {
 	GetModel(ctx context.Context, modelID string) (*entity.Model, error)
-	ListModels(ctx context.Context) ([]entity.Model, error)
-	CreateModel(ctx context.Context, name string, texts []string, pipeline *nlp.Pipeline) (string, error)
+	ListModels(ctx context.Context) ([]*entity.Model, error)
+	CreateModel(ctx context.Context, name string, shinglings []*shingling.Shingling) (modelID string, err error)
 }

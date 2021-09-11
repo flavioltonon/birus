@@ -1,26 +1,21 @@
 package entity
 
 import (
-	"github.com/google/uuid"
+	"github.com/flavioltonon/birus/internal/shingling/classifier"
+
+	ozzo "github.com/go-ozzo/ozzo-validation"
 )
 
-// Model is a NLP model
+// Model is a machine learning model with a classifier based on the w-shingling NLP technique
 type Model struct {
-	ID    string   `json:"_id"`
-	Name  string   `json:"name"`
-	Texts []string `json:"texts"`
+	Classifier *classifier.Classifier `json:"classifier"`
 }
 
-// NewModel creates a new Model with a given name and a given set of texts
-func NewModel(name string, texts []string) (*Model, error) {
-	return &Model{
-		ID:    uuid.NewString(),
-		Name:  name,
-		Texts: texts,
-	}, nil
-}
+// NewModel creates a new Model from a given classifier
+func NewModel(classifier *classifier.Classifier) (*Model, error) {
+	if err := ozzo.Required.Validate(classifier); err != nil {
+		return nil, err
+	}
 
-// Compare returns a similarity score (0-1) between an input text to any element in the text corpus in the model
-func (m *Model) Compare(text string) (float64, error) {
-	return 0, nil
+	return &Model{Classifier: classifier}, nil
 }

@@ -37,7 +37,7 @@ func NewServer() (*Server, error) {
 		return nil, errors.WithMessage(err, "failed to create initialize repository")
 	}
 
-	modelsService := service.NewModelsService(r, e)
+	modelsService := service.NewModelsService(r.Models, e)
 
 	ctrl := controller.New(&controller.Usecases{
 		Models:              modelsService,

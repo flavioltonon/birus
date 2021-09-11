@@ -5,12 +5,20 @@ import (
 	"sync"
 
 	"github.com/flavioltonon/birus/domain/entity"
+	"github.com/flavioltonon/birus/internal/shingling/classifier"
+
+	"github.com/google/uuid"
 )
 
 // ModelsMemoryRepository is a repository for Models
 type ModelsMemoryRepository struct {
-	models map[string]*entity.Model
+	models map[string]*Model
 	mu     *sync.RWMutex
+}
+
+type Model struct {
+	ID         string
+	Classifier *classifier.Classifier
 }
 
 // Get returns a that matches a given ID. If no Models are found, an entity.ErrNotFound will be returned.
@@ -23,7 +31,7 @@ func (r *ModelsMemoryRepository) Get(ctx context.Context, modelID string) (*enti
 		return nil, entity.ErrNotFound
 	}
 
-	return model, nil
+	return &entity.Model{Classifier: model.Classifier}, nil
 }
 
 // Create creates a Model
@@ -31,20 +39,25 @@ func (r *ModelsMemoryRepository) Create(ctx context.Context, e *entity.Model) (s
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.models[e.ID] = e
+	id := uuid.NewString()
 
-	return e.ID, nil
+	r.models[id] = &Model{
+		ID:         id,
+		Classifier: e.Classifier,
+	}
+
+	return id, nil
 }
 
 // List returns a set of Models
-func (r *ModelsMemoryRepository) List(ctx context.Context) ([]entity.Model, error) {
+func (r *ModelsMemoryRepository) List(ctx context.Context) ([]*entity.Model, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	models := make([]entity.Model, 0, len(r.models))
+	models := make([]*entity.Model, 0, len(r.models))
 
 	for _, model := range r.models {
-		models = append(models, *model)
+		models = append(models, &entity.Model{Classifier: model.Classifier})
 	}
 
 	return models, nil

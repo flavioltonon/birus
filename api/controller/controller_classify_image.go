@@ -6,10 +6,10 @@ import (
 
 	"github.com/flavioltonon/birus/api/presenter"
 	"github.com/flavioltonon/birus/internal/logger"
+
 	"github.com/gin-gonic/gin"
 	ozzo "github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
-
 	"go.uber.org/zap"
 )
 
@@ -22,14 +22,14 @@ func (c *Controller) classifyImage(ctx *gin.Context) {
 		return
 	}
 
-	model, err := c.usecases.ImageClassification.ClassifyImage(ctx, req.Image)
+	classifierID, err := c.usecases.ImageClassification.ClassifyImage(ctx, req.Image)
 	if err != nil {
 		logger.Log().Error("failed to classify image", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, ctx.Error(errors.WithMessage(err, "failed to classify image")))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"model": presenter.Model{ID: model.ID, Name: model.Name}})
+	ctx.JSON(http.StatusOK, gin.H{"model": presenter.Model{Name: classifierID}})
 }
 
 // ClassifyImageRequest is the request body for models creation requests

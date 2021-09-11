@@ -3,11 +3,16 @@ package service
 import (
 	"context"
 	"mime/multipart"
+	"strings"
 
 	"github.com/flavioltonon/birus/application/usecase"
 	"github.com/flavioltonon/birus/domain/entity"
 	"github.com/flavioltonon/birus/infrastructure/engine"
-	"github.com/flavioltonon/birus/internal/image"
+	"github.com/flavioltonon/birus/internal/dictionary"
+	"github.com/flavioltonon/birus/internal/normalization"
+	"github.com/flavioltonon/birus/internal/shingling"
+	"github.com/flavioltonon/birus/internal/shingling/classifier"
+	"github.com/flavioltonon/birus/internal/tokeniser"
 
 	ozzo "github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
@@ -18,8 +23,11 @@ var _ usecase.ImageClassificationUsecase = (*ImageClassificationService)(nil)
 
 // ImageClassificationService  interface
 type ImageClassificationService struct {
-	models usecase.ModelsUsecase
-	engine engine.Engine
+	models     usecase.ModelsUsecase
+	engine     engine.Engine
+	normalizer normalization.Chain
+	tokeniser  *tokeniser.Tokeniser
+	dictionary *dictionary.Dictionary
 }
 
 // NewImageClassificationService creates new use case
@@ -27,69 +35,105 @@ func NewImageClassificationService(m usecase.ModelsUsecase, e engine.Engine) *Im
 	return &ImageClassificationService{
 		models: m,
 		engine: e,
+		normalizer: normalization.NewChain(
+			normalization.RemoveAccents,
+			normalization.RemoveLineBreaks,
+			strings.ToLower,
+			normalization.RemoveSpecialCharacters,
+			normalization.RemoveMultipleWhitespaces,
+		),
+		tokeniser: tokeniser.New("e", "a", "as", "o", "os", "de", "da", "das", "do", "dos", "em"),
+		dictionary: dictionary.New(
+			"acesso", "auxiliar",
+			"caixa", "cartao", "chave", "cnpj", "codigo", "comprovante", "consulta", "consumidor", "cpf", "credito", "cupom",
+			"desconto", "descontos", "descricao", "dinheiro",
+			"economizou", "eletronica", "endereco", "estadual",
+			"federal", "fiscal", "fonte", "forma",
+			"ibpt", "impostos", "incidentes", "item", "itens",
+			"lei", "loja",
+			"mensagem", "municipal",
+			"nome", "nota",
+			"pagamento", "pagos", "produto", "produtos", "promocional",
+			"qtd",
+			"razao", "rua",
+			"sefaz", "sistemas", "social",
+			"totais", "total", "tributos", "troco",
+			"valor", "venda",
+		),
 	}
 }
 
-// CreateModel creates a new typification model for a given name and a set of images
-func (s *ImageClassificationService) CreateModel(ctx context.Context, name string, files []*multipart.FileHeader) (string, error) {
+func (s *ImageClassificationService) newShinglingFromText(text string) *shingling.Shingling {
+	normalizedText := s.normalizer.Normalize(text)
+
+	tokens := s.dictionary.ReplaceWordsBySimilarity(
+		s.tokeniser.Tokenise(normalizedText),
+		dictionary.LevenshteinDistance(1),
+	)
+
+	return shingling.FromTokens(tokens, 1)
+}
+
+// CreateClassificationModel creates a new typification model for a given name and a set of images
+func (s *ImageClassificationService) CreateClassificationModel(ctx context.Context, name string, files []*multipart.FileHeader) (string, error) {
 	if err := ozzo.Required.Validate(files); err != nil {
 		return "", errors.WithMessage(err, "failed to validate files")
 	}
 
-	images, err := image.FromBulkMultipartFileHeaders(files)
+	images, err := entity.NewImages(files)
 	if err != nil {
-		return "", errors.WithMessage(err, "failed to read images from multipart file headers")
+		return "", errors.WithMessage(err, "failed to read images from files")
 	}
 
-	texts := make([]string, 0, len(images))
+	shinglings := make([]*shingling.Shingling, 0, len(images))
 
 	for _, image := range images {
-		text, err := s.engine.ExtractTextFromImage(image)
+		text, err := s.engine.ExtractTextFromImage(image.Bytes())
 		if err != nil {
 			return "", errors.WithMessage(err, "failed to extract text from image")
 		}
 
-		texts = append(texts, text)
+		shinglings = append(shinglings, s.newShinglingFromText(text))
 	}
 
-	return s.models.CreateModel(ctx, name, texts)
+	return s.models.CreateModel(ctx, name, shinglings)
 }
 
-func (s *ImageClassificationService) ClassifyImage(ctx context.Context, file *multipart.FileHeader) (*entity.Model, error) {
-	image, err := image.FromMultipartFileHeader(file)
+func (s *ImageClassificationService) ClassifyImage(ctx context.Context, file *multipart.FileHeader) (string, error) {
+	image, err := entity.NewImage(file)
 	if err != nil {
-		return nil, errors.WithMessage(err, "failed to read image from multipart file header")
-	}
-
-	text, err := s.engine.ExtractTextFromImage(image)
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to extract text from image")
+		return "", errors.WithMessage(err, "failed to read image from file")
 	}
 
 	models, err := s.models.ListModels(ctx)
 	if err != nil {
-		return nil, errors.WithMessage(err, "failed to list models")
+		return "", errors.WithMessage(err, "failed to list models")
+	}
+
+	set := classifier.NewSet()
+
+	for _, model := range models {
+		set.AddClassifier(model.Classifier)
+	}
+
+	text, err := s.engine.ExtractTextFromImage(image.Bytes())
+	if err != nil {
+		return "", errors.WithMessage(err, "failed to extract text from image")
 	}
 
 	var (
-		highestSimilarityModel *entity.Model
-		highestSimilarity      = 0.0
+		highestScore           float64
+		highestScoreClassifier string
 	)
 
-	for _, model := range models {
-		similarity, err := model.Compare(text)
-		if err != nil {
-			return nil, errors.WithMessage(err, "failed to compare text to model")
-		}
+	scores := set.Classify(s.newShinglingFromText(text))
 
-		if similarity > highestSimilarity {
-			highestSimilarityModel = &model
+	for classifierName, score := range scores {
+		if score > highestScore {
+			highestScore = score
+			highestScoreClassifier = classifierName
 		}
 	}
 
-	if highestSimilarityModel == nil {
-		return nil, ErrNoTypificationMatches
-	}
-
-	return highestSimilarityModel, nil
+	return highestScoreClassifier, nil
 }

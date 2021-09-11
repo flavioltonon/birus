@@ -6,7 +6,8 @@ import (
 	"github.com/flavioltonon/birus/application/usecase"
 	"github.com/flavioltonon/birus/domain/entity"
 	"github.com/flavioltonon/birus/infrastructure/engine"
-	"github.com/pkg/errors"
+	"github.com/flavioltonon/birus/internal/shingling"
+	"github.com/flavioltonon/birus/internal/shingling/classifier"
 )
 
 // Ensure that ModelsService implements usecase.ModelsUsecase
@@ -30,15 +31,17 @@ func (s *ModelsService) GetModel(ctx context.Context, modelID string) (*entity.M
 }
 
 // ListModels fetches a set of Models from the repository
-func (s *ModelsService) ListModels(ctx context.Context) ([]entity.Model, error) {
+func (s *ModelsService) ListModels(ctx context.Context) ([]*entity.Model, error) {
 	return s.repository.List(ctx)
 }
 
 // CreateModel creates and persists a new model into the repository
-func (s *ModelsService) CreateModel(ctx context.Context, name string, texts []string) (string, error) {
-	model, err := entity.NewModel(name, texts)
+func (s *ModelsService) CreateModel(ctx context.Context, name string, shinglings []*shingling.Shingling) (string, error) {
+	classifier := classifier.New(name).Train(shinglings...)
+
+	model, err := entity.NewModel(classifier)
 	if err != nil {
-		return "", errors.WithMessage(err, "failed to create new model")
+		return "", err
 	}
 
 	return s.repository.Create(ctx, model)
