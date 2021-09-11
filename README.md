@@ -1,4 +1,9 @@
-### TODO:
+# birus - WIP
+
+Birus é uma API de classificação de cupons fiscais escrita em Go.
+
+## TODO:
+
 1) Pré-processar imagens
 
 2) Extrair dados:
