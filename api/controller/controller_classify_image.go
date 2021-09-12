@@ -4,7 +4,6 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"github.com/flavioltonon/birus/api/presenter"
 	"github.com/flavioltonon/birus/internal/logger"
 
 	"github.com/gin-gonic/gin"
@@ -22,14 +21,14 @@ func (c *Controller) classifyImage(ctx *gin.Context) {
 		return
 	}
 
-	classifierID, err := c.usecases.ImageClassification.ClassifyImage(ctx, req.Image)
+	scores, err := c.usecases.ImageClassification.ClassifyImage(ctx, req.Image)
 	if err != nil {
 		logger.Log().Error("failed to classify image", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, ctx.Error(errors.WithMessage(err, "failed to classify image")))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"model": presenter.Model{Name: classifierID}})
+	ctx.JSON(http.StatusOK, gin.H{"scores": scores})
 }
 
 // ClassifyImageRequest is the request body for models creation requests

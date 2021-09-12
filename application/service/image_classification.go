@@ -99,15 +99,15 @@ func (s *ImageClassificationService) CreateClassificationModel(ctx context.Conte
 	return s.models.CreateModel(ctx, name, shinglings)
 }
 
-func (s *ImageClassificationService) ClassifyImage(ctx context.Context, file *multipart.FileHeader) (string, error) {
+func (s *ImageClassificationService) ClassifyImage(ctx context.Context, file *multipart.FileHeader) (map[string]float64, error) {
 	image, err := entity.NewImage(file)
 	if err != nil {
-		return "", errors.WithMessage(err, "failed to read image from file")
+		return nil, errors.WithMessage(err, "failed to read image from file")
 	}
 
 	models, err := s.models.ListModels(ctx)
 	if err != nil {
-		return "", errors.WithMessage(err, "failed to list models")
+		return nil, errors.WithMessage(err, "failed to list models")
 	}
 
 	set := classifier.NewSet()
@@ -118,22 +118,8 @@ func (s *ImageClassificationService) ClassifyImage(ctx context.Context, file *mu
 
 	text, err := s.engine.ExtractTextFromImage(image.Bytes())
 	if err != nil {
-		return "", errors.WithMessage(err, "failed to extract text from image")
+		return nil, errors.WithMessage(err, "failed to extract text from image")
 	}
 
-	var (
-		highestScore           float64
-		highestScoreClassifier string
-	)
-
-	scores := set.Classify(s.newShinglingFromText(text))
-
-	for classifierName, score := range scores {
-		if score > highestScore {
-			highestScore = score
-			highestScoreClassifier = classifierName
-		}
-	}
-
-	return highestScoreClassifier, nil
+	return set.Classify(s.newShinglingFromText(text)), nil
 }
