@@ -38,7 +38,7 @@ type GobShingle struct {
 	Multiplicity int
 }
 
-func (s *Shingle) MarshalBinary() ([]byte, error) {
+func (s *Shingle) GobEncode() ([]byte, error) {
 	var buffer bytes.Buffer
 
 	if err := gob.NewEncoder(&buffer).Encode(&GobShingle{
@@ -52,7 +52,7 @@ func (s *Shingle) MarshalBinary() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (s *Shingle) UnmarshalBinary(b []byte) error {
+func (s *Shingle) GobDecode(b []byte) error {
 	var (
 		buffer = bytes.NewBuffer(b)
 		reader GobShingle

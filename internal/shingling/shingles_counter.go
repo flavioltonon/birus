@@ -83,7 +83,7 @@ type GobShinglesCounter struct {
 	M mapper.Mapper
 }
 
-func (m *ShinglesCounter) MarshalBinary() ([]byte, error) {
+func (m *ShinglesCounter) GobEncode() ([]byte, error) {
 	var buffer bytes.Buffer
 
 	if err := gob.NewEncoder(&buffer).Encode(&GobShinglesCounter{M: m.m}); err != nil {
@@ -93,7 +93,7 @@ func (m *ShinglesCounter) MarshalBinary() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (m *ShinglesCounter) UnmarshalBinary(b []byte) error {
+func (m *ShinglesCounter) GobDecode(b []byte) error {
 	var (
 		buffer = bytes.NewBuffer(b)
 		reader GobShinglesCounter

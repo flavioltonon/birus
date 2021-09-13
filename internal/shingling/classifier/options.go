@@ -29,7 +29,7 @@ type GobClassifierOptions struct {
 	ScoreNormalizationFactor float64
 }
 
-func (o *classifierOptions) MarshalBinary() ([]byte, error) {
+func (o *classifierOptions) GobEncode() ([]byte, error) {
 	var buffer bytes.Buffer
 
 	if err := gob.NewEncoder(&buffer).Encode(&GobClassifierOptions{
@@ -42,7 +42,7 @@ func (o *classifierOptions) MarshalBinary() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (o *classifierOptions) UnmarshalBinary(b []byte) error {
+func (o *classifierOptions) GobDecode(b []byte) error {
 	var (
 		buffer = bytes.NewBuffer(b)
 		reader GobClassifierOptions

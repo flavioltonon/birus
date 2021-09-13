@@ -1,8 +1,6 @@
 package repository
 
-import (
-	"context"
-)
+import "context"
 
 // Repository defines a repository
 type Repository interface {

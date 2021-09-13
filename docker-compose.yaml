@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image : mongo
+    volumes:
+    - ${GOPATH}/src/flavioltonon/birus/data:/data/db
+    ports:
+    - 27017:27017
+    restart: always

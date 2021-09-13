@@ -123,6 +123,7 @@ func (c *Classifier) calculateInverseDocumentFrequencies() map[string]float64 {
 }
 
 type GobClassifier struct {
+	ID              string
 	Model           *shingling.Shingling
 	ShinglesMapper  *shingling.ShinglesMapper
 	ShinglesCounter *shingling.ShinglesCounter
@@ -131,10 +132,11 @@ type GobClassifier struct {
 	Options         *classifierOptions
 }
 
-func (c *Classifier) MarshalBinary() ([]byte, error) {
+func (c *Classifier) GobEncode() ([]byte, error) {
 	var buffer bytes.Buffer
 
 	if err := gob.NewEncoder(&buffer).Encode(&GobClassifier{
+		ID:              c.ID,
 		Model:           c.model,
 		ShinglesMapper:  c.shinglesMapper,
 		ShinglesCounter: c.shinglesCounter,
@@ -148,7 +150,7 @@ func (c *Classifier) MarshalBinary() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (c *Classifier) UnmarshalBinary(b []byte) error {
+func (c *Classifier) GobDecode(b []byte) error {
 	var (
 		buffer = bytes.NewBuffer(b)
 		reader GobClassifier
@@ -158,6 +160,7 @@ func (c *Classifier) UnmarshalBinary(b []byte) error {
 		return err
 	}
 
+	c.ID = reader.ID
 	c.model = reader.Model
 	c.shinglesMapper = reader.ShinglesMapper
 	c.shinglesCounter = reader.ShinglesCounter

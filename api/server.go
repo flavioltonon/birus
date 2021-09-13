@@ -8,9 +8,12 @@ import (
 	"github.com/flavioltonon/birus/application/service"
 	"github.com/flavioltonon/birus/infrastructure/engine"
 	"github.com/flavioltonon/birus/infrastructure/repository"
+	"github.com/flavioltonon/birus/infrastructure/repository/mongodb"
 	"github.com/flavioltonon/birus/internal/logger"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
@@ -24,6 +27,8 @@ type Server struct {
 
 // NewServer returns a new Server
 func NewServer() (*Server, error) {
+	ctx := context.Background()
+
 	e, err := engine.NewGosseract(engine.GosseractOptions{
 		TessdataPrefix: viper.GetString("OCR_ENGINE_TESSDATA_PREFIX"),
 		Language:       viper.GetString("OCR_ENGINE_LANGUAGE"),
@@ -32,9 +37,18 @@ func NewServer() (*Server, error) {
 		return nil, errors.WithMessage(err, "failed to initialize OCR engine")
 	}
 
-	r, err := repository.NewMemoryRepository()
+	r, err := mongodb.NewRepository(&mongodb.Options{
+		DatabaseName: "birus",
+		ClientOptions: []*options.ClientOptions{
+			options.Client().ApplyURI("mongodb://localhost:27017"),
+		},
+	})
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to create initialize repository")
+	}
+
+	if err := r.Connect(ctx); err != nil {
+		return nil, errors.WithMessage(err, "failed to establish connection with the repository")
 	}
 
 	modelsService := service.NewModelsService(r.Models, e)

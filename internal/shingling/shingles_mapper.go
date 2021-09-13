@@ -47,7 +47,7 @@ type GobShinglesMapper struct {
 	M mapper.Mapper
 }
 
-func (m *ShinglesMapper) MarshalBinary() ([]byte, error) {
+func (m *ShinglesMapper) GobEncode() ([]byte, error) {
 	var buffer bytes.Buffer
 
 	if err := gob.NewEncoder(&buffer).Encode(&GobShinglesMapper{M: m.m}); err != nil {
@@ -57,7 +57,7 @@ func (m *ShinglesMapper) MarshalBinary() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (m *ShinglesMapper) UnmarshalBinary(b []byte) error {
+func (m *ShinglesMapper) GobDecode(b []byte) error {
 	var (
 		buffer = bytes.NewBuffer(b)
 		reader GobShinglesMapper
