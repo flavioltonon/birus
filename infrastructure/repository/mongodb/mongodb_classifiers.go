@@ -6,9 +6,11 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 
+	"birus/domain/entity"
 	"birus/domain/entity/shingling/classifier"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -58,7 +60,22 @@ func (c *Classifier) UnmarshalBSON(b []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(b)).Decode(&c.data)
 }
 
-// Create creates a Classifier
+// GetClassifier finds a Classifier by its ID
+func (r *classifierRepository) GetClassifier(ctx context.Context, classifierID string) (*classifier.Classifier, error) {
+	var classifier Classifier
+
+	err := r.getCollection().FindOne(ctx, primitive.M{"_id": classifierID}).Decode(&classifier)
+	if err == mongo.ErrNoDocuments {
+		return nil, entity.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return classifier.data, nil
+}
+
+// CreateClassifier creates a Classifier
 func (r *classifierRepository) CreateClassifier(ctx context.Context, classifier *classifier.Classifier) error {
 	if _, err := r.getCollection().InsertOne(ctx, Classifier{data: classifier}); err != nil {
 		return err
@@ -67,7 +84,7 @@ func (r *classifierRepository) CreateClassifier(ctx context.Context, classifier 
 	return nil
 }
 
-// List returns a set of Classifiers
+// ListClassifiers returns a set of Classifiers
 func (r *classifierRepository) ListClassifiers(ctx context.Context) ([]*classifier.Classifier, error) {
 	var (
 		pipeline    mongo.Pipeline
@@ -90,4 +107,13 @@ func (r *classifierRepository) ListClassifiers(ctx context.Context) ([]*classifi
 	}
 
 	return es, nil
+}
+
+// DeleteClassifier deletes a Classifier
+func (r *classifierRepository) DeleteClassifier(ctx context.Context, classifierID string) error {
+	if _, err := r.getCollection().DeleteOne(ctx, primitive.M{"_id": classifierID}); err != nil {
+		return err
+	}
+
+	return nil
 }

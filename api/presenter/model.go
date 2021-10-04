@@ -17,7 +17,7 @@ func NewClassifier(classifier *classifier.Classifier) *Classifier {
 }
 
 // NewClassifierList creates a list of Classifier presenters
-func NewClassifierList(classifiers ...*classifier.Classifier) []*Classifier {
+func NewClassifierList(classifiers []*classifier.Classifier) []*Classifier {
 	result := make([]*Classifier, 0, len(classifiers))
 
 	for _, classifier := range classifiers {

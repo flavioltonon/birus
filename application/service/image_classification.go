@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"birus/application/usecase"
+	"birus/domain/entity"
 	"birus/domain/entity/shingling/classifier"
 
 	"github.com/pkg/errors"
@@ -47,6 +48,28 @@ func (s *ImageClassificationService) CreateClassifier(ctx context.Context, reque
 	}
 
 	return classifier, nil
+}
+
+// ListClassifiers lists the existing classifiers
+func (s *ImageClassificationService) ListClassifiers(ctx context.Context, request *usecase.ListClassifiersRequest) ([]*classifier.Classifier, error) {
+	if err := request.Validate(); err != nil {
+		return nil, errors.WithMessage(err, "failed to validate request body")
+	}
+
+	return s.classifierRepository.ListClassifiers(ctx)
+}
+
+// DeleteClassifier deletes an existing classifier
+func (s *ImageClassificationService) DeleteClassifier(ctx context.Context, request *usecase.DeleteClassifierRequest) error {
+	if err := request.Validate(); err != nil {
+		return errors.WithMessage(err, "failed to validate request body")
+	}
+
+	if _, err := s.classifierRepository.GetClassifier(ctx, request.ID); errors.Is(err, entity.ErrNotFound) {
+		return err
+	}
+
+	return s.classifierRepository.DeleteClassifier(ctx, request.ID)
 }
 
 func (s *ImageClassificationService) ClassifyImage(ctx context.Context, request *usecase.ClassifyImageRequest) (map[string]float64, error) {

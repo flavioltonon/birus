@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"birus/domain/entity"
 	"birus/domain/entity/shingling/classifier"
 )
 
@@ -13,7 +14,20 @@ type ClassifierRepository struct {
 	mu          *sync.RWMutex
 }
 
-// Create creates a Classifier
+// GetClassifier finds a Classifier by its ID
+func (r *ClassifierRepository) GetClassifier(ctx context.Context, classifierID string) (*classifier.Classifier, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	classifier, exists := r.classifiers[classifierID]
+	if !exists {
+		return nil, entity.ErrNotFound
+	}
+
+	return classifier, nil
+}
+
+// CreateClassifier creates a Classifier
 func (r *ClassifierRepository) CreateClassifier(ctx context.Context, classifier *classifier.Classifier) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -35,4 +49,14 @@ func (r *ClassifierRepository) ListClassifiers(ctx context.Context) ([]*classifi
 	}
 
 	return classifiers, nil
+}
+
+// DeleteClassifier deletes a Classifier
+func (r *ClassifierRepository) DeleteClassifier(ctx context.Context, classifierID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	delete(r.classifiers, classifierID)
+
+	return nil
 }

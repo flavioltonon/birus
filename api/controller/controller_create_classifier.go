@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"birus/api/presenter"
-	"birus/application/usecase"
 	"birus/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
@@ -28,18 +27,5 @@ func (c *Controller) createClassifier(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"classifier": presenter.NewClassifier(classifier)})
-}
-
-func (c *Controller) newCreateClassifierRequest(ctx *gin.Context) (*usecase.CreateClassifierRequest, error) {
-	request := usecase.CreateClassifierRequest{
-		Name:  ctx.Request.FormValue("name"),
-		Files: ctx.Request.MultipartForm.File["images"],
-	}
-
-	if err := request.Validate(); err != nil {
-		return nil, err
-	}
-
-	return &request, nil
+	ctx.JSON(http.StatusCreated, gin.H{"classifier": presenter.NewClassifier(classifier)})
 }

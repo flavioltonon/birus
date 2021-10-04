@@ -23,6 +23,8 @@ func (c *Controller) NewRouter() http.Handler {
 
 	api := router.Group("/api")
 	api.POST("/tax-receipts/classifiers", c.createClassifier)
+	api.GET("/tax-receipts/classifiers", c.listClassifiers)
+	api.DELETE("/tax-receipts/classifiers/:classifier_id", c.deleteClassifier)
 	api.POST("/tax-receipts/classify", c.classifyImage)
 
 	return router
