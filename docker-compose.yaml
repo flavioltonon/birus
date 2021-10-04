@@ -1,10 +1,19 @@
 version: "3.8"
 
 services:
-  mongodb:
+  birus:
+    image: birus:development
+    volumes:
+      - ./config.yaml:/config.yaml
+    ports:
+      - 8000:8000
+    depends_on:
+      - database
+
+  database:
     image : mongo
     volumes:
-    - ${GOPATH}/src/flavioltonon/birus/data:/data/db
+    - ${GOPATH}/src/flavioltonon/birus/.data:/data/db
     ports:
     - 27017:27017
     restart: always
