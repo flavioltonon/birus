@@ -3,7 +3,7 @@ package mongodb
 import (
 	"context"
 
-	ozzo "github.com/go-ozzo/ozzo-validation"
+	ozzo "github.com/go-ozzo/ozzo-validation/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -13,8 +13,8 @@ import (
 type Repository struct {
 	client *mongo.Client
 
-	common repo
-	Models *modelsRepository
+	common               repo
+	ClassifierRepository *classifierRepository
 
 	options *Options
 }
@@ -56,7 +56,7 @@ func (r *Repository) Connect(ctx context.Context) error {
 
 	r.client = client
 	r.common.database = r.client.Database(r.options.DatabaseName)
-	r.Models = (*modelsRepository)(&r.common)
+	r.ClassifierRepository = (*classifierRepository)(&r.common)
 	return nil
 }
 
