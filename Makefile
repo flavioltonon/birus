@@ -4,9 +4,6 @@ build:
 check:
 	go vet ./...
 
-image-dev:
-	docker build . --tag birus:development
-
 start: stop
 	docker-compose up
 

@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   birus:
-    image: birus:development
+    build: .
     volumes:
       - ./config.yaml:/config.yaml
     ports:
