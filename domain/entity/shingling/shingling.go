@@ -1,6 +1,9 @@
 package shingling
 
 import (
+	"birus/domain/entity/dictionary"
+	"birus/domain/entity/normalization"
+	"birus/domain/entity/tokeniser"
 	"bytes"
 	"encoding/gob"
 )
@@ -15,7 +18,70 @@ type Shingling struct {
 	multiplicity    int // defines the size of the n-grams contained in the Shingling
 }
 
-// New creates a new Shingling for a given set of tokens and size for its n-grams
+// Options are customizable options that define how texts should be pre-processed before generating
+// a Shingling
+type Options struct {
+	normalizer         normalization.Chain
+	tokeniser          *tokeniser.Tokeniser
+	dictionary         *dictionary.Dictionary
+	wordSimilarityFunc dictionary.SimilarityFunc
+}
+
+var _defaultOptions = Options{
+	normalizer:         normalization.NewChain(),
+	tokeniser:          tokeniser.New(),
+	dictionary:         dictionary.New(),
+	wordSimilarityFunc: dictionary.LevenshteinDistance(1),
+}
+
+// OptionFunc are functions capable of modifying a given set of Options
+type OptionFunc func(opts *Options)
+
+// apply applies an OptionFunc on a set of Options
+func (fn OptionFunc) apply(opts *Options) { fn(opts) }
+
+// FromText creates a new Shingling for a given text and size for its n-grams, allowing customized text
+// normalization and tokenisation options. If no options are provided, _defaultOptions should be applied.
+func FromText(text string, n int, options ...OptionFunc) *Shingling {
+	opts := _defaultOptions
+
+	for _, opt := range options {
+		opt.apply(&opts)
+	}
+
+	normalizedText := opts.normalizer.Normalize(text)
+
+	tokens := opts.tokeniser.Tokenise(normalizedText)
+
+	for i := range tokens {
+		tokens[i], _ = opts.dictionary.FindWordBySimilarity(tokens[i], opts.wordSimilarityFunc)
+	}
+
+	return FromTokens(tokens, n)
+}
+
+// SetNormalizer sets a new normalization.Chain to the Options
+func SetNormalizer(normalizer normalization.Chain) OptionFunc {
+	return func(opts *Options) { opts.normalizer = normalizer }
+}
+
+// SetTokeniser sets a new tokeniser to the Options
+func SetTokeniser(tokeniser *tokeniser.Tokeniser) OptionFunc {
+	return func(opts *Options) { opts.tokeniser = tokeniser }
+}
+
+// SetDictionary sets a new dictionary of words to the Options
+func SetDictionary(dictionary *dictionary.Dictionary) OptionFunc {
+	return func(opts *Options) { opts.dictionary = dictionary }
+}
+
+// SetWordSimilarityFunc sets a word similarity function to the Options. This function is used by the Options's
+// dictionary to replace words for their best matches.
+func SetWordSimilarityFunc(fn dictionary.SimilarityFunc) OptionFunc {
+	return func(opts *Options) { opts.wordSimilarityFunc = fn }
+}
+
+// FromTokens creates a new Shingling for a given set of tokens and size for its n-grams
 func FromTokens(tokens []string, n int) *Shingling {
 	if len(tokens) < n {
 		panic("n should be greater than/equal to the number of tokens in the document")
@@ -117,7 +183,7 @@ func intersect(s1, s2 *Shingling) *Shingling {
 		}
 	}
 
-	return &Shingling{shingles: commonShingles}
+	return FromShingles(commonShingles)
 }
 
 // JaccardSimilarity calculates the Jaccard similarity between 2 Shinglings

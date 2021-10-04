@@ -1,7 +1,7 @@
 package engine
 
 import (
-	ozzo "github.com/go-ozzo/ozzo-validation"
+	ozzo "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/otiai10/gosseract/v2"
 	"github.com/pkg/errors"
 )

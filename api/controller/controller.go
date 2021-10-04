@@ -22,7 +22,7 @@ func (c *Controller) NewRouter() http.Handler {
 	router := gin.Default()
 
 	api := router.Group("/api")
-	api.POST("/tax-receipts/models", c.createModel)
+	api.POST("/tax-receipts/classifiers", c.createClassifier)
 	api.POST("/tax-receipts/classify", c.classifyImage)
 
 	return router

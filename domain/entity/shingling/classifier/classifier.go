@@ -5,79 +5,75 @@ import (
 	"encoding/gob"
 	"math"
 
-	"github.com/flavioltonon/birus/internal/shingling"
+	"birus/domain/entity/shingling"
+
+	"github.com/google/uuid"
 )
 
 // Classifier is a Shingling classifier
 type Classifier struct {
-	ID              string
+	id              string
+	name            string
 	model           *shingling.Shingling
+	shinglings      []*shingling.Shingling
 	shinglesMapper  *shingling.ShinglesMapper
 	shinglesCounter *shingling.ShinglesCounter
 	shinglesTotal   uint16
 	shinglingsTotal uint16
-	options         *classifierOptions
+	options         classifierOptions
 }
 
-// New creates a new Shingling classifier with a given TF-IDF cut-off function.
-func New(id string, funcs ...classifierOptionFunc) *Classifier {
-	options := _defaultClassifierOptions
-
-	for _, fn := range funcs {
-		fn(&options)
-	}
-
+// New creates a new Shingling Classifier
+func New(name string) *Classifier {
 	return &Classifier{
-		ID:              id,
+		id:              uuid.NewString(),
+		name:            name,
 		shinglesMapper:  shingling.NewShinglesMapper(),
 		shinglesCounter: shingling.NewShinglesCounter(),
-		options:         &options,
+		options:         _defaultClassifierOptions,
 	}
 }
 
-// Train trains a Classifier with a set of Shinglings
-func (c *Classifier) Train(shinglings ...*shingling.Shingling) *Classifier {
-	for i := range shinglings {
-		c.addShingling(shinglings[i])
+// ID returns Classifier's unique ID
+func (c *Classifier) ID() string {
+	return c.id
+}
+
+// Name returns the Classifier's name
+func (c *Classifier) Name() string {
+	return c.name
+}
+
+// SetTFIDFCutOffThreshold sets a custom TF-IDF cutoff threshold for the Classifier
+func (c *Classifier) SetTFIDFCutOffThreshold(threshold float64) {
+	c.options.tfIdfCutOffThreshold = threshold
+}
+
+// SetShinglingMultiplicity sets a multiplicity for shinglings in the Classifier
+func (c *Classifier) SetShinglingMultiplicity(shinglingMultiplicity int) {
+	c.options.shinglingMultiplicity = shinglingMultiplicity
+}
+
+// Train trains a Classifier with a set of texts
+func (c *Classifier) Train(texts ...string) *Classifier {
+	for _, text := range texts {
+		c.addShingling(shingling.FromText(text, c.options.shinglingMultiplicity))
 	}
 
-	var shingles []*shingling.Shingle
-
-	for hash, tfIdf := range c.calculateTFIDFs() {
-		if tfIdf > c.options.tfIdfCutOffThreshold {
-			continue
-		}
-
-		if shingle, exists := c.shinglesMapper.GetValue(hash); exists {
-			shingles = append(shingles, shingle)
-		}
-	}
-
-	c.model = shingling.FromShingles(shingles)
-
-	var highestScore float64
-
-	for i := range shinglings {
-		score := c.Classify(shinglings[i])
-
-		if score > highestScore {
-			highestScore = score
-		}
-	}
-
-	c.options.scoreNormalizationFactor = 1 / highestScore
-
+	c.model = shingling.FromShingles(c.cutOffShingles())
+	c.options.scoreNormalizationFactor = c.calculateScoreNormalizationFactor(texts)
 	return c
 }
 
 // Classify returns a similarity score by comparing a given Shingling with the Classifier model
-func (c *Classifier) Classify(s *shingling.Shingling) float64 {
+func (c *Classifier) Classify(text string) float64 {
+	s := shingling.FromText(text, c.options.shinglingMultiplicity)
 	return shingling.JaccardSimilarity(c.model, s) * c.options.scoreNormalizationFactor
 }
 
 func (c *Classifier) addShingling(s *shingling.Shingling) {
 	c.addShingles(s.GetShingles())
-	c.shinglingsTotal++
+	c.shinglings = append(c.shinglings, s)
 }
 
 func (c *Classifier) addShingles(shingles []*shingling.Shingle) {
@@ -122,21 +118,51 @@ func (c *Classifier) calculateInverseDocumentFrequencies() map[string]float64 {
 	return idfs
 }
 
+func (c *Classifier) cutOffShingles() []*shingling.Shingle {
+	var shingles []*shingling.Shingle
+
+	for hash, tfIdf := range c.calculateTFIDFs() {
+		if tfIdf > c.options.tfIdfCutOffThreshold {
+			continue
+		}
+
+		if shingle, exists := c.shinglesMapper.GetValue(hash); exists {
+			shingles = append(shingles, shingle)
+		}
+	}
+
+	return shingles
+}
+
+func (c *Classifier) calculateScoreNormalizationFactor(texts []string) float64 {
+	var highestScore float64
+
+	for _, text := range texts {
+		if score := c.Classify(text); score > highestScore {
+			highestScore = score
+		}
+	}
+
+	return 1 / highestScore
+}
+
 type GobClassifier struct {
 	ID              string
+	Name            string
 	Model           *shingling.Shingling
 	ShinglesMapper  *shingling.ShinglesMapper
 	ShinglesCounter *shingling.ShinglesCounter
 	ShinglesTotal   uint16
 	ShinglingsTotal uint16
-	Options         *classifierOptions
+	Options         classifierOptions
 }
 
 func (c *Classifier) GobEncode() ([]byte, error) {
 	var buffer bytes.Buffer
 
 	if err := gob.NewEncoder(&buffer).Encode(&GobClassifier{
-		ID:              c.ID,
+		ID:              c.id,
+		Name:            c.name,
 		Model:           c.model,
 		ShinglesMapper:  c.shinglesMapper,
 		ShinglesCounter: c.shinglesCounter,
@@ -160,7 +186,8 @@ func (c *Classifier) GobDecode(b []byte) error {
 		return err
 	}
 
-	c.ID = reader.ID
+	c.id = reader.ID
+	c.name = reader.Name
 	c.model = reader.Model
 	c.shinglesMapper = reader.ShinglesMapper
 	c.shinglesCounter = reader.ShinglesCounter

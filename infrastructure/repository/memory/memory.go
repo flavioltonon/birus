@@ -3,18 +3,20 @@ package memory
 import (
 	"context"
 	"sync"
+
+	"birus/domain/entity/shingling/classifier"
 )
 
 type Repository struct {
-	Models *ModelsRepository
+	ClassifierRepository *ClassifierRepository
 }
 
 // NewRepository creates a new Repository
 func NewRepository() (*Repository, error) {
 	return &Repository{
-		Models: &ModelsRepository{
-			models: make(map[string]*Model),
-			mu:     new(sync.RWMutex),
+		ClassifierRepository: &ClassifierRepository{
+			classifiers: make(map[string]*classifier.Classifier),
+			mu:          new(sync.RWMutex),
 		},
 	}, nil
 }

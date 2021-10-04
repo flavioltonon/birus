@@ -1,10 +1,9 @@
 package shingling
 
 import (
+	"birus/domain/entity/mapper"
 	"bytes"
 	"encoding/gob"
-
-	"github.com/flavioltonon/birus/internal/mapper"
 )
 
 // ShinglesMapper is a mapper for Shingles by their hashes

@@ -1,27 +1,26 @@
 package controller
 
 import (
-	"mime/multipart"
 	"net/http"
 
-	"github.com/flavioltonon/birus/internal/logger"
+	"birus/application/usecase"
+	"birus/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
-	ozzo "github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
 // classifyImage returns the model with the highest level of similarity with a given image
 func (c *Controller) classifyImage(ctx *gin.Context) {
-	req, err := newClassifyImageRequest(ctx)
+	request, err := c.newClassifyImageRequest(ctx)
 	if err != nil {
 		logger.Log().Error("failed to parse request body", zap.Error(err))
 		ctx.JSON(http.StatusBadRequest, ctx.Error(errors.WithMessage(err, "failed to parse request body")))
 		return
 	}
 
-	scores, err := c.usecases.ImageClassification.ClassifyImage(ctx, req.Image)
+	scores, err := c.usecases.ImageClassification.ClassifyImage(ctx, request)
 	if err != nil {
 		logger.Log().Error("failed to classify image", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, ctx.Error(errors.WithMessage(err, "failed to classify image")))
@@ -31,30 +30,19 @@ func (c *Controller) classifyImage(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"scores": scores})
 }
 
-// ClassifyImageRequest is the request body for models creation requests
-type ClassifyImageRequest struct {
-	Image *multipart.FileHeader `json:"image"`
-}
-
-func newClassifyImageRequest(ctx *gin.Context) (*ClassifyImageRequest, error) {
-	image, err := ctx.FormFile("image")
+func (c *Controller) newClassifyImageRequest(ctx *gin.Context) (*usecase.ClassifyImageRequest, error) {
+	file, err := ctx.FormFile("image")
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to parse file from multipart form")
 	}
 
-	req := ClassifyImageRequest{
-		Image: image,
+	request := &usecase.ClassifyImageRequest{
+		File: file,
 	}
 
-	if err := req.validate(); err != nil {
-		return nil, errors.WithMessage(err, "failed to validate request body")
+	if err := request.Validate(); err != nil {
+		return nil, err
 	}
 
-	return &req, nil
-}
-
-func (r ClassifyImageRequest) validate() error {
-	return ozzo.ValidateStruct(&r,
-		ozzo.Field(&r.Image, ozzo.Required),
-	)
+	return request, nil
 }

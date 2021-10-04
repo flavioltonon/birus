@@ -23,9 +23,7 @@ var (
 
 type normalizer func(s string) string
 
-func (fn normalizer) normalize(s string) string {
-	return fn(s)
-}
+func (fn normalizer) normalize(s string) string { return fn(s) }
 
 // RemoveAccents removes accents from a given string
 func RemoveAccents(s string) string {

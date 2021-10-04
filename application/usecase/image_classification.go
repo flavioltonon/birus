@@ -3,10 +3,41 @@ package usecase
 import (
 	"context"
 	"mime/multipart"
+
+	"birus/domain/entity/shingling/classifier"
+
+	ozzo "github.com/go-ozzo/ozzo-validation/v4"
 )
 
-// ImageClassificationUsecase interface
+// ImageClassificationUsecase are usecases that define operations involving image classification
 type ImageClassificationUsecase interface {
-	CreateClassificationModel(ctx context.Context, name string, files []*multipart.FileHeader) (modelID string, err error)
-	ClassifyImage(ctx context.Context, file *multipart.FileHeader) (scores map[string]float64, err error)
+	CreateClassifier(ctx context.Context, request *CreateClassifierRequest) (*classifier.Classifier, error)
+	ClassifyImage(ctx context.Context, request *ClassifyImageRequest) (map[string]float64, error)
+}
+
+type CreateClassifierRequest struct {
+	Name  string
+	Files []*multipart.FileHeader
+}
+
+func (r CreateClassifierRequest) Validate() error {
+	return ozzo.ValidateStruct(&r,
+		ozzo.Field(&r.Name, ozzo.Required),
+		ozzo.Field(&r.Files, ozzo.Required),
+	)
+}
+
+type ClassifyImageRequest struct {
+	File *multipart.FileHeader
+}
+
+func (r ClassifyImageRequest) Validate() error {
+	return ozzo.ValidateStruct(&r,
+		ozzo.Field(&r.File, ozzo.Required),
+	)
+}
+
+type ClassifierRepository interface {
+	CreateClassifier(ctx context.Context, classifier *classifier.Classifier) error
+	ListClassifiers(ctx context.Context) ([]*classifier.Classifier, error)
 }

@@ -8,25 +8,19 @@ import (
 var _defaultClassifierOptions = classifierOptions{
 	tfIdfCutOffThreshold:     0.1,
 	scoreNormalizationFactor: 1,
+	shinglingMultiplicity:    1,
 }
 
 type classifierOptions struct {
 	tfIdfCutOffThreshold     float64
 	scoreNormalizationFactor float64
-}
-
-type classifierOptionFunc func(*classifierOptions)
-
-// SetTFIDFCutOffThreshold is a classifierOptionFunc that can be used to define TF-IDF cutoff threshold for a Classifier.
-func SetTFIDFCutOffThreshold(threshold float64) classifierOptionFunc {
-	return func(opts *classifierOptions) {
-		opts.tfIdfCutOffThreshold = threshold
-	}
+	shinglingMultiplicity    int
 }
 
 type GobClassifierOptions struct {
 	TfIdfCutOffThreshold     float64
 	ScoreNormalizationFactor float64
+	ShinglingMultiplicity    int
 }
 
 func (o *classifierOptions) GobEncode() ([]byte, error) {
@@ -35,6 +29,7 @@ func (o *classifierOptions) GobEncode() ([]byte, error) {
 	if err := gob.NewEncoder(&buffer).Encode(&GobClassifierOptions{
 		TfIdfCutOffThreshold:     o.tfIdfCutOffThreshold,
 		ScoreNormalizationFactor: o.scoreNormalizationFactor,
+		ShinglingMultiplicity:    o.shinglingMultiplicity,
 	}); err != nil {
 		return nil, err
 	}
@@ -54,5 +49,6 @@ func (o *classifierOptions) GobDecode(b []byte) error {
 
 	o.tfIdfCutOffThreshold = reader.TfIdfCutOffThreshold
 	o.scoreNormalizationFactor = reader.ScoreNormalizationFactor
+	o.shinglingMultiplicity = reader.ShinglingMultiplicity
 	return nil
 }

@@ -2,8 +2,6 @@ package classifier
 
 import (
 	"math"
-
-	"github.com/flavioltonon/birus/internal/shingling"
 )
 
 // Set is a set of Classifiers
@@ -22,7 +20,7 @@ func (s *Set) AddClassifier(classifier *Classifier) {
 }
 
 // Classify returns the similarity score with all the Set classifiers for a given Shingling
-func (s *Set) Classify(shingling *shingling.Shingling) map[string]float64 {
+func (s *Set) Classify(text string) map[string]float64 {
 	var (
 		scores     = make(map[string]float64, len(s.classifiers))
 		totalScore float64
@@ -30,11 +28,11 @@ func (s *Set) Classify(shingling *shingling.Shingling) map[string]float64 {
 
 	for i := range s.classifiers {
 		classifier := s.classifiers[i]
-		score := classifier.Classify(shingling)
+		score := classifier.Classify(text)
 
 		// use the square of the scores to accentuate their differences
 		scoreSquare := math.Pow(score, 2)
-		scores[classifier.ID] = scoreSquare
+		scores[classifier.Name()] = scoreSquare
 		totalScore += scoreSquare
 	}
 

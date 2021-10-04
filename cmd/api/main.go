@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/flavioltonon/birus/api"
-	"github.com/flavioltonon/birus/internal/logger"
+	"birus/api"
+	"birus/infrastructure/logger"
 
 	"go.uber.org/zap"
 )

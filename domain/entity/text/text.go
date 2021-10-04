@@ -1,12 +1,12 @@
-package utils
+package text
 
 import (
 	"io/ioutil"
 	"os"
 )
 
-// WriteTextToFile writes a given text on a new file, created on a given path
-func WriteTextToFile(text, filePath string) error {
+// WriteToFile writes a given text on a new file, created on a given path
+func WriteToFile(text, filePath string) error {
 	f, err := os.Create(filePath)
 	if err != nil {
 		return err
@@ -21,12 +21,12 @@ func WriteTextToFile(text, filePath string) error {
 	return nil
 }
 
-// ReadTextsFromFiles reads files from a given set of paths and returns their contents
-func ReadTextsFromFiles(paths []string) ([]string, error) {
+// ReadFromFiles reads files from a given set of paths and returns their contents
+func ReadFromFiles(paths []string) ([]string, error) {
 	texts := make([]string, 0, len(paths))
 
 	for _, path := range paths {
-		text, err := ReadTextFromFile(path)
+		text, err := ReadFromFile(path)
 		if err != nil {
 			return nil, err
 		}
@@ -37,8 +37,8 @@ func ReadTextsFromFiles(paths []string) ([]string, error) {
 	return texts, nil
 }
 
-// ReadTextFromFile reads a file from a given path and returns its contents
-func ReadTextFromFile(path string) (string, error) {
+// ReadFromFile reads a file from a given path and returns its contents
+func ReadFromFile(path string) (string, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
