@@ -3,6 +3,7 @@ FROM golang:1.17.1-alpine3.14 as builder
 ### Install Tesseract and its dependencies
 RUN apk update && apk add \
     g++ \
+    make \
     musl-dev \
     tesseract-ocr-dev \
     tesseract-ocr-data-por
@@ -10,16 +11,10 @@ RUN apk update && apk add \
 ### Start build flow
 WORKDIR /app
 
-# Set Go build envs
-ENV GO111MODULE=on \
-    CGO_ENABLED=1 \
-    GOOS=linux \
-    GOARCH=amd64
-
 # Copy all files from source and compile code
 COPY . .
 
-RUN go build -ldflags '-s -w' -o ./bin/birus ./cmd/api
+RUN make build
 
 FROM alpine:3.14
 
