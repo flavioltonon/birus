@@ -64,10 +64,11 @@ func NewServer() (*Server, error) {
 
 	ctrl := controller.New(&controller.Usecases{
 		ImageClassification: service.NewImageClassificationService(
-			service.NewTextExtrationService(e),
+			service.NewOpticalCharacterRecognitionService(e),
 			service.NewTextProcessingService(),
 			r.ClassifierRepository,
 		),
+		OpticalCharacterRecognition: service.NewOpticalCharacterRecognitionService(e),
 	})
 
 	return &Server{

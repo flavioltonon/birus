@@ -3,7 +3,6 @@ package controller
 import (
 	"net/http"
 
-	"birus/application/usecase"
 	"birus/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
@@ -28,21 +27,4 @@ func (c *Controller) classifyImage(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"scores": scores})
-}
-
-func (c *Controller) newClassifyImageRequest(ctx *gin.Context) (*usecase.ClassifyImageRequest, error) {
-	file, err := ctx.FormFile("image")
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to parse file from multipart form")
-	}
-
-	request := &usecase.ClassifyImageRequest{
-		File: file,
-	}
-
-	if err := request.Validate(); err != nil {
-		return nil, err
-	}
-
-	return request, nil
 }

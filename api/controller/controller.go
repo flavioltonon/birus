@@ -22,10 +22,15 @@ func (c *Controller) NewRouter() http.Handler {
 	router := gin.Default()
 
 	api := router.Group("/api")
-	api.POST("/tax-receipts/classifiers", c.createClassifier)
-	api.GET("/tax-receipts/classifiers", c.listClassifiers)
-	api.DELETE("/tax-receipts/classifiers/:classifier_id", c.deleteClassifier)
-	api.POST("/tax-receipts/classify", c.classifyImage)
+
+	// ImageClassification
+	api.POST("/classifiers", c.createClassifier)
+	api.GET("/classifiers", c.listClassifiers)
+	api.DELETE("/classifiers/:classifier_id", c.deleteClassifier)
+	api.POST("/classifiers/classify", c.classifyImage)
+
+	// OpticalCharacterRecognition
+	api.POST("/ocr/read", c.readTextFromImage)
 
 	return router
 }

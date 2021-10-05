@@ -12,21 +12,21 @@ import (
 
 // ImageClassificationService  interface
 type ImageClassificationService struct {
-	textExtraction       usecase.TextExtractionUsecase
-	textProcessing       usecase.TextProcessingUsecase
-	classifierRepository usecase.ClassifierRepository
+	opticalCharacterRecognition usecase.OpticalCharacterRecognitionUsecase
+	textProcessing              usecase.TextProcessingUsecase
+	classifierRepository        usecase.ClassifierRepository
 }
 
 // NewImageClassificationService creates new use case
 func NewImageClassificationService(
-	textExtraction usecase.TextExtractionUsecase,
+	opticalCharacterRecognition usecase.OpticalCharacterRecognitionUsecase,
 	textProcessing usecase.TextProcessingUsecase,
 	classifierRepository usecase.ClassifierRepository,
 ) usecase.ImageClassificationUsecase {
 	return &ImageClassificationService{
-		textExtraction:       textExtraction,
-		textProcessing:       textProcessing,
-		classifierRepository: classifierRepository,
+		opticalCharacterRecognition: opticalCharacterRecognition,
+		textProcessing:              textProcessing,
+		classifierRepository:        classifierRepository,
 	}
 }
 
@@ -36,7 +36,9 @@ func (s *ImageClassificationService) CreateClassifier(ctx context.Context, reque
 		return nil, errors.WithMessage(err, "failed to validate request body")
 	}
 
-	texts, err := s.textExtraction.ExtractTextFromFiles(request.Files)
+	texts, err := s.opticalCharacterRecognition.ReadTextFromImages(&usecase.ReadTextFromImagesRequest{
+		Files: request.Files,
+	})
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to extract texts from files")
 	}
@@ -88,7 +90,9 @@ func (s *ImageClassificationService) ClassifyImage(ctx context.Context, request 
 		set.AddClassifier(classifier)
 	}
 
-	text, err := s.textExtraction.ExtractTextFromFile(request.File)
+	text, err := s.opticalCharacterRecognition.ReadTextFromImage(&usecase.ReadTextFromImageRequest{
+		File: request.File,
+	})
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to read image from file")
 	}
