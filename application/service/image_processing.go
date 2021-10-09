@@ -15,13 +15,26 @@ func NewImageProcessingService() usecase.ImageProcessingUsecase {
 	return new(ImageProcessingService)
 }
 
+var _defaultOptions = []image.ProcessOptionFunc{
+	image.Grayscale(),
+	image.Sharpen(1.0),
+	image.AdjustContrast(80),
+	image.AdjustBrightness(50),
+}
+
 // ProcessImage processes an image with a given set of options
 func (h *ImageProcessingService) ProcessImage(request *usecase.ProcessImageRequest) (*image.Image, error) {
 	if err := request.Validate(); err != nil {
 		return nil, errors.WithMessage(err, "failed to validate request body")
 	}
 
-	return request.Image.Process(request.Options...)
+	options := _defaultOptions
+
+	if len(request.Options) > 0 {
+		options = request.Options
+	}
+
+	return request.Image.Process(options...)
 }
 
 // ProcessImages processes a list of images with a given set of options
