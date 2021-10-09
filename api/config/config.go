@@ -19,7 +19,6 @@ func init() {
 
 	// Database config
 	viper.SetDefault("database.kind", "mongodb")
-	viper.SetDefault("database.name", "birus")
 	viper.SetDefault("database.uri", "mongodb://localhost:27017")
 }
 

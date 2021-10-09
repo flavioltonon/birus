@@ -37,7 +37,7 @@ func NewServer() (*Server, error) {
 	}
 
 	r, err := mongodb.NewRepository(&mongodb.Options{
-		DatabaseName: config.Database.Name,
+		DatabaseName: "birus",
 		ClientOptions: []*options.ClientOptions{
 			options.Client().ApplyURI(config.Database.URI),
 		},
