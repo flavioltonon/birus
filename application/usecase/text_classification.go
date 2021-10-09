@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"mime/multipart"
 
 	"birus/domain/entity/shingling/classifier"
 
@@ -10,23 +9,23 @@ import (
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
-// ImageClassificationUsecase are usecases that define operations involving image classification
-type ImageClassificationUsecase interface {
+// TextClassificationUsecase are usecases that define operations involving text classification
+type TextClassificationUsecase interface {
 	CreateClassifier(ctx context.Context, request *CreateClassifierRequest) (*classifier.Classifier, error)
 	ListClassifiers(ctx context.Context, request *ListClassifiersRequest) ([]*classifier.Classifier, error)
 	DeleteClassifier(ctx context.Context, request *DeleteClassifierRequest) error
-	ClassifyImage(ctx context.Context, request *ClassifyImageRequest) (map[string]float64, error)
+	ClassifyText(ctx context.Context, request *ClassifyTextRequest) ([]*classifier.Score, error)
 }
 
 type CreateClassifierRequest struct {
 	Name  string
-	Files []*multipart.FileHeader
+	Texts []string
 }
 
 func (r CreateClassifierRequest) Validate() error {
 	return ozzo.ValidateStruct(&r,
 		ozzo.Field(&r.Name, ozzo.Required),
-		ozzo.Field(&r.Files, ozzo.Required),
+		ozzo.Field(&r.Texts, ozzo.Required),
 	)
 }
 
@@ -46,13 +45,13 @@ func (r DeleteClassifierRequest) Validate() error {
 	)
 }
 
-type ClassifyImageRequest struct {
-	File *multipart.FileHeader
+type ClassifyTextRequest struct {
+	Text string
 }
 
-func (r ClassifyImageRequest) Validate() error {
+func (r ClassifyTextRequest) Validate() error {
 	return ozzo.ValidateStruct(&r,
-		ozzo.Field(&r.File, ozzo.Required),
+		ozzo.Field(&r.Text, ozzo.Required),
 	)
 }
 

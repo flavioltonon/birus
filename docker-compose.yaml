@@ -9,11 +9,12 @@ services:
       - 8000:8000
     depends_on:
       - database
+    restart: always
 
   database:
     image : mongo
     volumes:
-    - ${GOPATH}/src/flavioltonon/birus/.data:/data/db
+    - .data/mongodb:/data/db
     ports:
     - 27017:27017
     restart: always

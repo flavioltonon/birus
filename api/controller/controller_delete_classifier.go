@@ -20,7 +20,7 @@ func (c *Controller) deleteClassifier(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.usecases.ImageClassification.DeleteClassifier(ctx, request); err != nil {
+	if err := c.usecases.TextClassification.DeleteClassifier(ctx, request); err != nil {
 		logger.Log().Error("failed to delete classifier", zap.Error(err))
 
 		status := http.StatusNotFound

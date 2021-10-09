@@ -20,7 +20,7 @@ func (c *Controller) listClassifiers(ctx *gin.Context) {
 		return
 	}
 
-	classifiers, err := c.usecases.ImageClassification.ListClassifiers(ctx, request)
+	classifiers, err := c.usecases.TextClassification.ListClassifiers(ctx, request)
 	if err != nil {
 		logger.Log().Error("failed to list classifiers", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, ctx.Error(errors.WithMessage(err, "failed to list classifiers")))

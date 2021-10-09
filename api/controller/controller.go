@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"birus/api/middleware"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -23,14 +24,19 @@ func (c *Controller) NewRouter() http.Handler {
 
 	api := router.Group("/api")
 
-	// ImageClassification
-	api.POST("/classifiers", c.createClassifier)
-	api.GET("/classifiers", c.listClassifiers)
-	api.DELETE("/classifiers/:classifier_id", c.deleteClassifier)
-	api.POST("/classifiers/classify", c.classifyImage)
+	// TextClassification
+	textClassification := api.Group("/text-classification")
+	textClassification.POST("/classifiers", c.createClassifier)
+	textClassification.GET("/classifiers", c.listClassifiers)
+	textClassification.DELETE("/classifiers/:classifier_id", c.deleteClassifier)
+	textClassification.POST("/classify", c.classifyText)
 
 	// OpticalCharacterRecognition
-	api.POST("/ocr/read", c.readTextFromImage)
+	ocr := api.Group("/ocr")
+	ocr.POST("/read", c.readTextFromImage)
+	ocr.POST("/read/batch", c.readTextFromImages)
+
+	router.Use(middleware.SetRequestID)
 
 	return router
 }

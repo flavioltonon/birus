@@ -2,50 +2,101 @@ package service
 
 import (
 	"birus/application/usecase"
-	"birus/domain/entity/image"
 	"birus/infrastructure/engine"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 // OpticalCharacterRecognitionService is a text extraction service
 type OpticalCharacterRecognitionService struct {
-	e engine.Engine
+	imageProcessing usecase.ImageProcessingUsecase
+	textProcessing  usecase.TextProcessingUsecase
+	options         OpticalCharacterRecognitionServiceOptions
+}
+
+// OpticalCharacterRecognitionServiceOptions are options for a OpticalCharacterRecognitionService
+type OpticalCharacterRecognitionServiceOptions struct {
+	TessdataPrefix string
+	Language       string
 }
 
 // NewOpticalCharacterRecognitionService creates a new OpticalCharacterRecognitionService
-func NewOpticalCharacterRecognitionService(e engine.Engine) usecase.OpticalCharacterRecognitionUsecase {
-	return &OpticalCharacterRecognitionService{e: e}
+func NewOpticalCharacterRecognitionService(
+	imageProcessing usecase.ImageProcessingUsecase,
+	textProcessing usecase.TextProcessingUsecase,
+	options OpticalCharacterRecognitionServiceOptions,
+) usecase.OpticalCharacterRecognitionUsecase {
+	return &OpticalCharacterRecognitionService{
+		imageProcessing: imageProcessing,
+		textProcessing:  textProcessing,
+		options:         options,
+	}
 }
 
 // ReadTextFromImage uses an OCR engine to extract text from a given multipart.FileHeader
 func (s *OpticalCharacterRecognitionService) ReadTextFromImage(request *usecase.ReadTextFromImageRequest) (string, error) {
-	image, err := image.FromMultipartFileHeader(request.File)
+	image, err := s.imageProcessing.ProcessImage(&usecase.ProcessImageRequest{
+		Image:   request.Image,
+		Options: request.Options,
+	})
 	if err != nil {
-		return "", errors.WithMessage(err, "failed to read image from file")
+		return "", errors.WithMessage(err, "failed to process image")
 	}
 
-	text, err := s.e.ExtractTextFromImage(image.Bytes())
+	// Gosseract clients are not thread-safe, so we need to start a new client for every call to Tesseract
+	e, err := engine.NewGosseract(engine.GosseractOptions{
+		TessdataPrefix: s.options.TessdataPrefix,
+		Language:       s.options.Language,
+	})
+	if err != nil {
+		return "", errors.WithMessage(err, "failed to initialize OCR engine")
+	}
+
+	defer e.Stop()
+
+	text, err := e.ExtractTextFromImage(image.Bytes())
 	if err != nil {
 		return "", errors.WithMessage(err, "failed to extract text from image")
 	}
 
-	return text, nil
+	return s.textProcessing.ProcessText(text), nil
 }
 
-// ReadTextFromImages uses an OCR engine to extract texts from a given set of multipart.FileHeaders
+// ReadTextFromImages uses an OCR engine to extract texts from a given set of image.Images
 func (s *OpticalCharacterRecognitionService) ReadTextFromImages(request *usecase.ReadTextFromImagesRequest) ([]string, error) {
-	texts := make([]string, 0, len(request.Files))
+	var (
+		texts = make([]string, 0, len(request.Images))
+		g     errgroup.Group
+		t     = make(chan string, len(request.Images))
+	)
 
-	for _, file := range request.Files {
-		text, err := s.ReadTextFromImage(&usecase.ReadTextFromImageRequest{
-			File: file,
+	defer close(t)
+
+	for i := range request.Images {
+		image := request.Images[i]
+
+		g.Go(func() error {
+			text, err := s.ReadTextFromImage(&usecase.ReadTextFromImageRequest{
+				Image: image,
+			})
+			if err != nil {
+				return errors.WithMessage(err, "failed to extract text from image")
+			}
+
+			t <- text
+			return nil
 		})
-		if err != nil {
-			return nil, errors.WithMessage(err, "failed to extract text from file")
-		}
+	}
 
-		texts = append(texts, text)
+	go func() {
+		for text := range t {
+			texts = append(texts, text)
+		}
+	}()
+
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	return texts, nil

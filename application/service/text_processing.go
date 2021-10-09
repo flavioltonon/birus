@@ -28,9 +28,9 @@ func NewTextProcessingService() usecase.TextProcessingUsecase {
 		tokeniser: tokeniser.New("e", "a", "as", "o", "os", "de", "da", "das", "do", "dos", "em"),
 		dictionary: dictionary.New(
 			"acesso", "auxiliar",
-			"caixa", "cartao", "chave", "cnpj", "codigo", "comprovante", "consulta", "consumidor", "cpf", "credito", "cupom",
+			"caixa", "cartao", "chave", "cnpj", "codigo", "comete", "comprovante", "consulta", "consumidor", "cpf", "credito", "crime", "cupom",
 			"desconto", "descontos", "descricao", "dinheiro",
-			"economizou", "eletronica", "endereco", "estadual",
+			"economizou", "eletronico", "eletronica", "endereco", "estadual", "extrato",
 			"federal", "fiscal", "fonte", "forma",
 			"ibpt", "impostos", "incidentes", "item", "itens",
 			"lei", "loja",
@@ -68,4 +68,8 @@ func (s *TextProcessingService) FixWords(words ...string) []string {
 	}
 
 	return result
+}
+
+func (s *TextProcessingService) ProcessText(text string) string {
+	return strings.Join(s.FixWords(s.TokeniseText(s.NormalizeText(text))...), " ")
 }

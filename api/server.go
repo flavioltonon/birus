@@ -7,7 +7,6 @@ import (
 	"birus/api/config"
 	"birus/api/controller"
 	"birus/application/service"
-	"birus/infrastructure/engine"
 	"birus/infrastructure/logger"
 	"birus/infrastructure/repository"
 	"birus/infrastructure/repository/mongodb"
@@ -24,7 +23,6 @@ type Server struct {
 	config *config.Config
 
 	repository repository.Repository
-	engine     engine.Engine
 }
 
 // NewServer returns a new Server
@@ -36,14 +34,6 @@ func NewServer() (*Server, error) {
 
 	if !config.Server.DevelopmentEnvironment {
 		gin.SetMode(gin.ReleaseMode)
-	}
-
-	e, err := engine.NewGosseract(engine.GosseractOptions{
-		TessdataPrefix: config.OCR.TessdataPrefix,
-		Language:       config.OCR.Language,
-	})
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to initialize OCR engine")
 	}
 
 	r, err := mongodb.NewRepository(&mongodb.Options{
@@ -62,13 +52,19 @@ func NewServer() (*Server, error) {
 		return nil, errors.WithMessage(err, "failed to establish connection with the repository")
 	}
 
+	// Declaration of the services that will be used by the server
 	ctrl := controller.New(&controller.Usecases{
-		ImageClassification: service.NewImageClassificationService(
-			service.NewOpticalCharacterRecognitionService(e),
+		OpticalCharacterRecognition: service.NewOpticalCharacterRecognitionService(
+			service.NewImageProcessingService(),
 			service.NewTextProcessingService(),
+			service.OpticalCharacterRecognitionServiceOptions{
+				TessdataPrefix: config.OCR.TessdataPrefix,
+				Language:       config.OCR.Language,
+			},
+		),
+		TextClassification: service.NewTextClassificationService(
 			r.ClassifierRepository,
 		),
-		OpticalCharacterRecognition: service.NewOpticalCharacterRecognitionService(e),
 	})
 
 	return &Server{
@@ -78,7 +74,6 @@ func NewServer() (*Server, error) {
 		},
 		config:     config,
 		repository: r,
-		engine:     e,
 	}, nil
 }
 
@@ -99,10 +94,6 @@ func (s *Server) Stop() error {
 
 	if err := s.repository.Disconnect(ctx); err != nil {
 		return errors.WithMessage(err, "failed to disconnect from repository")
-	}
-
-	if err := engine.Stop(s.engine); err != nil {
-		return errors.WithMessage(err, "failed to stop OCR engine")
 	}
 
 	if err := s.core.Shutdown(ctx); err != nil {
