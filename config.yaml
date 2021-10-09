@@ -1,4 +1,2 @@
 database:
   uri: mongodb://database:27017
-ocr:
-  tessdata_prefix: /usr/share/tessdata/

@@ -22,6 +22,7 @@ FROM alpine:3.14
 COPY --from=builder /app/bin /bin
 COPY --from=builder /usr/lib /usr/lib
 COPY --from=builder /usr/share/tessdata/ /usr/share/tessdata/
+COPY --from=builder /app/config.yaml /config.yaml
 
 # Set Tesseract training data dir
 ENV TESSDATA_PREFIX=/usr/share/tessdata/
