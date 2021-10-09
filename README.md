@@ -18,6 +18,24 @@ Para criar uma imagem Docker, o seguinte comando pode ser utilizado:
 
 > make image
 
+## Configurações padrão:
+
+```
+Servidor:
+- server.address: :8080 // endereço padrão do servidor
+- server.development_environment: true // modo de operação do servidor (true: desenvolvimento/false: release)
+
+OCR:
+- ocr.tessdata_prefix: /usr/share/tessdata/ // caminho para o diretório de dados de treinamento utilizados pela ferramenta de OCR Tesseract
+- ocr.language: por // idioma utilizado pelo Tesseract
+
+Banco de dados:
+- database.kind: mongodb // tipo de banco de dados a ser utilizado
+- database.uri: mongodb://localhost:27017 // endereço padrão para conexão do Birus com o banco de dados
+```
+
+A qualquer momento, é possível alterar (ambiente local) ou sobrescrever (container Docker) o arquivo de configurações da aplicação (config.yaml). No segundo caso, o arquivo deve ser colocado em `/config.yaml`.
+
 ## Funcionalidades:
 
 ### Definições
