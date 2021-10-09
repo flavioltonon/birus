@@ -9,10 +9,13 @@ check:
 	go vet ./...
 
 image:
-	docker build -t birus:latest .
+	docker build -t flavioltonon/birus:latest .
+
+push:
+	docker push flavioltonon/birus:latest
 
 start: stop
-	docker-compose up --build
+	docker-compose up
 
 stop:
 	docker-compose down --remove-orphans
