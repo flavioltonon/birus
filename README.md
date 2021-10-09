@@ -136,6 +136,9 @@ Status: 204
 
 ```
 POST /api/text-classification/classify
+{
+    "text": string // obrigatório
+}
 ```
 
 **Response**
