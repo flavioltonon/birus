@@ -8,6 +8,16 @@ Birus é uma API de classificação de textos escrita em Go.
 - docker@latest
 - docker-compose@latest
 
+## Rodando o projeto:
+
+Rodar o seguinte comando:
+
+> make start
+
+Para criar uma imagem Docker, o seguinte comando pode ser utilizado:
+
+> make image
+
 ## Funcionalidades:
 
 ### Definições

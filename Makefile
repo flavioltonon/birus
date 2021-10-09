@@ -8,6 +8,9 @@ build:
 check:
 	go vet ./...
 
+image:
+	docker build -t birus:latest .
+
 start: stop
 	docker-compose up --build
 
