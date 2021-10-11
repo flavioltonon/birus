@@ -53,9 +53,12 @@ func NewServer() (*Server, error) {
 	}
 
 	// Declaration of the services that will be used by the server
+	imageProcessingService := service.NewImageProcessingService()
+
 	ctrl := controller.New(&controller.Usecases{
+		ImageProcessing: imageProcessingService,
 		OpticalCharacterRecognition: service.NewOpticalCharacterRecognitionService(
-			service.NewImageProcessingService(),
+			imageProcessingService,
 			service.NewTextProcessingService(),
 			service.OpticalCharacterRecognitionServiceOptions{
 				TessdataPrefix: config.OCR.TessdataPrefix,

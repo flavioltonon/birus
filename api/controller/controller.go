@@ -1,8 +1,9 @@
 package controller
 
 import (
-	"birus/api/middleware"
 	"net/http"
+
+	"birus/api/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,6 +36,10 @@ func (c *Controller) NewRouter() http.Handler {
 	ocr := api.Group("/ocr")
 	ocr.POST("/read", c.readTextFromImage)
 	ocr.POST("/read/batch", c.readTextFromImages)
+
+	// ImageProcessing
+	imageProcessing := api.Group("/image-processing")
+	imageProcessing.POST("/process", c.processImage)
 
 	router.Use(middleware.SetRequestID)
 
