@@ -27,5 +27,10 @@ func (c *Controller) processImage(ctx *gin.Context) {
 		return
 	}
 
+	if gin.Mode() == gin.DebugMode {
+		// Save image for debugging
+		image.Save("/output/image.jpg")
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{"image": presenter.NewImage(image)})
 }

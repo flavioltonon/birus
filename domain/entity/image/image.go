@@ -170,7 +170,7 @@ func ParseProcessOptions(optionsStr string) ([]ProcessOptionFunc, error) {
 	case "", "default":
 		return []ProcessOptionFunc{
 			Grayscale(),
-			Sharpen(0.75),
+			Sharpen(1.0),
 			AdjustContrast(50),
 			AdjustBrightness(20),
 		}, nil
