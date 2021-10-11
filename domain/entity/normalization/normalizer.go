@@ -15,7 +15,7 @@ var (
 	_accentsRemover = transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
 
 	// _specialCharactersMatcher is a regular expression to match all characters that are not letters or whitespaces
-	_specialCharactersMatcher = regexp.MustCompile(`[^a-z0-9\s\.\,\/\-]+`)
+	_specialCharactersMatcher = regexp.MustCompile(`[^a-z0-9\s\.\,\/\-\$]+`)
 
 	// _multipleWhitespaceMatcher is a regular expression to match all occurrences of multiple sequential whitespaces
 	_multipleWhitespaceMatcher = regexp.MustCompile(`[^\S\r\n]{2,}`)

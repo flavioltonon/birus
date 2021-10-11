@@ -98,11 +98,9 @@ func (c *Controller) newReadTextFromImageRequest(ctx *gin.Context) (*usecase.Rea
 			return nil, errors.WithMessage(err, "failed to read image from file")
 		}
 
-		if optionsStr := ctx.Request.FormValue("options"); optionsStr != "" {
-			request.Options, err = image.ParseProcessOptions(optionsStr)
-			if err != nil {
-				return nil, errors.WithMessage(err, "failed to parse process options")
-			}
+		request.Options, err = image.ParseProcessOptions(ctx.Request.FormValue("options"))
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to parse process options")
 		}
 	}
 
@@ -135,11 +133,9 @@ func (c *Controller) newReadTextFromImagesRequest(ctx *gin.Context) (*usecase.Re
 			return nil, errors.WithMessage(err, "failed to read images from base64 list")
 		}
 
-		if wrapper.Options != "" {
-			request.Options, err = image.ParseProcessOptions(wrapper.Options)
-			if err != nil {
-				return nil, errors.WithMessage(err, "failed to parse process options")
-			}
+		request.Options, err = image.ParseProcessOptions(wrapper.Options)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to parse process options")
 		}
 	case "multipart/form-data":
 		form, err := ctx.MultipartForm()
@@ -152,11 +148,9 @@ func (c *Controller) newReadTextFromImagesRequest(ctx *gin.Context) (*usecase.Re
 			return nil, errors.WithMessage(err, "failed to read image from file")
 		}
 
-		if optionsStr := ctx.Request.FormValue("options"); optionsStr != "" {
-			request.Options, err = image.ParseProcessOptions(optionsStr)
-			if err != nil {
-				return nil, errors.WithMessage(err, "failed to parse process options")
-			}
+		request.Options, err = image.ParseProcessOptions(ctx.Request.FormValue("options"))
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to parse process options")
 		}
 	}
 
@@ -170,18 +164,40 @@ func (c *Controller) newReadTextFromImagesRequest(ctx *gin.Context) (*usecase.Re
 func (c *Controller) newProcessImageRequest(ctx *gin.Context) (*usecase.ProcessImageRequest, error) {
 	var request usecase.ProcessImageRequest
 
-	file, err := ctx.FormFile("file")
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to parse file from multipart form")
-	}
+	switch ctx.ContentType() {
+	case "application/json":
+		wrapper := new(struct {
+			Base64  string `json:"base64"`
+			Options string `json:"options"`
+		})
 
-	request.Image, err = image.FromMultipartFileHeader(file)
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to read image from file")
-	}
+		if err := ctx.BindJSON(wrapper); err != nil {
+			return nil, errors.WithMessage(err, "failed to decode JSON body")
+		}
 
-	if optionsStr := ctx.Request.FormValue("options"); optionsStr != "" {
-		request.Options, err = image.ParseProcessOptions(optionsStr)
+		raw, err := base64.StdEncoding.DecodeString(wrapper.Base64)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to decode base64 image data")
+		}
+
+		request.Image = image.FromBytes(raw)
+
+		request.Options, err = image.ParseProcessOptions(wrapper.Options)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to parse process options")
+		}
+	case "multipart/form-data":
+		file, err := ctx.FormFile("file")
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to parse file from multipart form")
+		}
+
+		request.Image, err = image.FromMultipartFileHeader(file)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to read image from file")
+		}
+
+		request.Options, err = image.ParseProcessOptions(ctx.Request.FormValue("options"))
 		if err != nil {
 			return nil, errors.WithMessage(err, "failed to parse process options")
 		}

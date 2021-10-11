@@ -191,6 +191,6 @@ Status: 500
 ```
 Status: 200
 {
-    "scores": []<score> (ordenado, do maior para o menor valor do campo "confidence")
+    "result": <score>
 }
 ```

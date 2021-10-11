@@ -14,7 +14,7 @@ image:
 push:
 	docker push flavioltonon/birus:latest
 
-start: stop build
+start: stop
 	docker-compose up
 
 stop:

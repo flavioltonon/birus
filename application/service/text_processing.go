@@ -25,7 +25,7 @@ func NewTextProcessingService() usecase.TextProcessingUsecase {
 			normalization.RemoveSpecialCharacters,
 			normalization.RemoveMultipleWhitespaces,
 		),
-		tokeniser: tokeniser.New("e", "a", "as", "o", "os", "de", "da", "das", "do", "dos", "em"),
+		tokeniser: tokeniser.New(),
 		dictionary: dictionary.New(
 			"acesso", "auxiliar", "avenida",
 			"bairro", "bermuda", "brasil",

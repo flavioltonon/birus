@@ -27,5 +27,5 @@ func (c *Controller) classifyText(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"scores": presenter.NewScoreList(scores)})
+	ctx.JSON(http.StatusOK, gin.H{"result": presenter.NewScore(scores[0])})
 }

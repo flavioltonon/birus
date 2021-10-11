@@ -166,7 +166,17 @@ func ParseProcessOptions(optionsStr string) ([]ProcessOptionFunc, error) {
 
 	fns := make([]ProcessOptionFunc, 0, len(optionsStrs))
 
-	if optionsStr != "none" {
+	switch optionsStr {
+	case "", "default":
+		return []ProcessOptionFunc{
+			Grayscale(),
+			Sharpen(0.75),
+			AdjustContrast(50),
+			AdjustBrightness(20),
+		}, nil
+	case "none":
+		return fns, nil
+	default:
 		for _, option := range optionsStrs {
 			fn, err := parseProcessOption(option)
 			if err != nil {
@@ -251,12 +261,6 @@ func parseProcessOption(optionStr string) (ProcessOptionFunc, error) {
 // Resize resizes an image to a given width and height in pixels
 func Resize(width int, height int) ProcessOptionFunc {
 	return func(img image.Image) *image.NRGBA {
-		if img.Bounds().Dx() > img.Bounds().Dy() {
-			height = 0
-		} else {
-			width = 0
-		}
-
 		return imaging.Resize(img, width, height, imaging.Lanczos)
 	}
 }
