@@ -18,12 +18,12 @@ func (c *Controller) readTextFromImages(ctx *gin.Context) {
 		return
 	}
 
-	text, err := c.usecases.OpticalCharacterRecognition.ReadTextFromImages(request)
+	texts, err := c.usecases.OpticalCharacterRecognition.ReadTextFromImages(request)
 	if err != nil {
 		logger.Log().Error("failed to read text from images", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, ctx.Error(errors.WithMessage(err, "failed to read text from images")))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"text": text})
+	ctx.JSON(http.StatusOK, gin.H{"texts": texts})
 }

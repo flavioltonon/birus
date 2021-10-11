@@ -17,7 +17,7 @@ func NewImageProcessingService() usecase.ImageProcessingUsecase {
 
 var _defaultOptions = []image.ProcessOptionFunc{
 	image.Grayscale(),
-	image.Sharpen(1.0),
+	image.Sharpen(0.75),
 	image.AdjustContrast(80),
 	image.AdjustBrightness(50),
 }

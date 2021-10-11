@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   birus:
-    build: .
+    image: flavioltonon/birus:latest
     ports:
       - 8000:8000
     depends_on:

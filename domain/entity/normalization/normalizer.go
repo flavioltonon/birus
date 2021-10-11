@@ -15,10 +15,10 @@ var (
 	_accentsRemover = transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
 
 	// _specialCharactersMatcher is a regular expression to match all characters that are not letters or whitespaces
-	_specialCharactersMatcher = regexp.MustCompile(`[^a-z\s]+`)
+	_specialCharactersMatcher = regexp.MustCompile(`[^a-z0-9\s\.\,\/\-]+`)
 
 	// _multipleWhitespaceMatcher is a regular expression to match all occurrences of multiple sequential whitespaces
-	_multipleWhitespaceMatcher = regexp.MustCompile(`\s+`)
+	_multipleWhitespaceMatcher = regexp.MustCompile(`[^\S\r\n]{2,}`)
 )
 
 type normalizer func(s string) string
@@ -33,6 +33,11 @@ func RemoveAccents(s string) string {
 	}
 
 	return s
+}
+
+// IsolateLineBreaks adds one whitespace before and one after line breaks
+func IsolateLineBreaks(s string) string {
+	return strings.Replace(s, "\n", " \n ", -1)
 }
 
 // RemoveLineBreaks replaces line breaks with whitespaces

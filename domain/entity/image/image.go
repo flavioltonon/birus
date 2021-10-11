@@ -151,6 +151,13 @@ func parseProcessOption(optionStr string) (ProcessOptionFunc, error) {
 	split := strings.Split(optionStr, ":")
 
 	switch split[0] {
+	case "blur":
+		sigma, err := strconv.ParseFloat(split[1], 64)
+		if err != nil {
+			return nil, errors.New("sigma should be a number")
+		}
+
+		return GaussianBlur(sigma), nil
 	case "resize":
 		if len(split) != 2 {
 			return nil, errors.New("resize requires a weight and a height")
@@ -241,5 +248,12 @@ func AdjustBrightness(percentage float64) ProcessOptionFunc {
 func Sharpen(sigma float64) ProcessOptionFunc {
 	return func(img image.Image) *image.NRGBA {
 		return imaging.Sharpen(img, sigma)
+	}
+}
+
+// GaussianBlur produces a blurred version of the image. Sigma should be a positive number.
+func GaussianBlur(sigma float64) ProcessOptionFunc {
+	return func(img image.Image) *image.NRGBA {
+		return imaging.Blur(img, sigma)
 	}
 }

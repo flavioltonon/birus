@@ -3,6 +3,7 @@ package service
 import (
 	"birus/application/usecase"
 	"birus/infrastructure/engine"
+	"sync"
 
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -68,10 +69,8 @@ func (s *OpticalCharacterRecognitionService) ReadTextFromImages(request *usecase
 	var (
 		texts = make([]string, 0, len(request.Images))
 		g     errgroup.Group
-		t     = make(chan string, len(request.Images))
+		mu    sync.RWMutex
 	)
-
-	defer close(t)
 
 	for i := range request.Images {
 		image := request.Images[i]
@@ -84,16 +83,12 @@ func (s *OpticalCharacterRecognitionService) ReadTextFromImages(request *usecase
 				return errors.WithMessage(err, "failed to extract text from image")
 			}
 
-			t <- text
+			mu.Lock()
+			texts = append(texts, text)
+			mu.Unlock()
 			return nil
 		})
 	}
-
-	go func() {
-		for text := range t {
-			texts = append(texts, text)
-		}
-	}()
 
 	if err := g.Wait(); err != nil {
 		return nil, err

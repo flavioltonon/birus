@@ -6,7 +6,7 @@ build:
 	go build -ldflags '-s -w' -o ./bin/birus ./cmd/api
 
 check:
-	go vet ./...
+	go vet ./...	
 
 image:
 	docker build -t flavioltonon/birus:latest .
@@ -14,7 +14,7 @@ image:
 push:
 	docker push flavioltonon/birus:latest
 
-start: stop
+start: stop build
 	docker-compose up
 
 stop:
