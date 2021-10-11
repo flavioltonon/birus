@@ -34,7 +34,7 @@ func NewTextProcessingService() usecase.TextProcessingUsecase {
 			"economizou", "eletronico", "eletronica", "emit", "emitida", "endereco", "estadual", "extrato",
 			"federal", "fem", "fiscal", "fonte", "forma",
 			"ibpt", "identificado", "identificados", "imposto", "impostos", "incidente", "incidentes", "inf", "item", "itens",
-			"lei", "leis", "loja", "lojas",
+			"lei", "leis", "loja", "lojas", "ltda",
 			"macaquinho", "maguineta", "masc", "mensagem", "municipal", "municipais",
 			"nao", "natal", "nome", "nota",
 			"pagamento", "pagos", "pijama", "produto", "produtos", "promocional", "promocionais",
