@@ -2,8 +2,10 @@ package image
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"image"
+	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"strconv"
@@ -20,14 +22,6 @@ type Image struct {
 	mimetype *mimetype.MIME
 }
 
-// New creates a new Image
-func New(data []byte) *Image {
-	return &Image{
-		data:     data,
-		mimetype: mimetype.Detect(data),
-	}
-}
-
 // FromMultipartFileHeader creates an Image from a given *multipart.FileHeader
 func FromMultipartFileHeader(fileHeader *multipart.FileHeader) (*Image, error) {
 	f, err := fileHeader.Open()
@@ -35,14 +29,7 @@ func FromMultipartFileHeader(fileHeader *multipart.FileHeader) (*Image, error) {
 		return nil, errors.WithMessage(err, "failed to open file")
 	}
 
-	defer f.Close()
-
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to read data from file")
-	}
-
-	return New(data), nil
+	return FromReader(f)
 }
 
 // FromMultipartFileHeaders returns a set of Images for a given set of *multipart.FileHeader
@@ -59,6 +46,55 @@ func FromMultipartFileHeaders(fileHeaders []*multipart.FileHeader) ([]*Image, er
 	}
 
 	return images, nil
+}
+
+// FromBytes creates a new Image from a io.Reader. This function closes the reader after it has been processed if it
+// also implements io.Closer.
+func FromReader(reader io.Reader) (*Image, error) {
+	if closer, implements := reader.(io.Closer); implements {
+		defer closer.Close()
+	}
+
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to read data from file")
+	}
+
+	return FromBytes(data), nil
+}
+
+// FromBase64 creates a new Image from a given base64 string
+func FromBase64(s string) (*Image, error) {
+	data, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to decode base64 image data")
+	}
+
+	return FromBytes(data), nil
+}
+
+// FromBase64List returns a set of Images for a given set of base64 strings
+func FromBase64List(base64List []string) ([]*Image, error) {
+	images := make([]*Image, 0, len(base64List))
+
+	for _, s := range base64List {
+		image, err := FromBase64(s)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to read image from base64 string")
+		}
+
+		images = append(images, image)
+	}
+
+	return images, nil
+}
+
+// FromBytes creates a new Image from a given set of bytes
+func FromBytes(data []byte) *Image {
+	return &Image{
+		data:     data,
+		mimetype: mimetype.Detect(data),
+	}
 }
 
 // Bytes returns Image's content as a set of bytes
@@ -105,7 +141,7 @@ func (i *Image) Process(opts ...ProcessOptionFunc) (*Image, error) {
 		return nil, err
 	}
 
-	return New(buffer.Bytes()), nil
+	return FromBytes(buffer.Bytes()), nil
 }
 
 // Save saves an image to a given file path
@@ -130,13 +166,15 @@ func ParseProcessOptions(optionsStr string) ([]ProcessOptionFunc, error) {
 
 	fns := make([]ProcessOptionFunc, 0, len(optionsStrs))
 
-	for _, option := range optionsStrs {
-		fn, err := parseProcessOption(option)
-		if err != nil {
-			return nil, err
-		}
+	if optionsStr != "none" {
+		for _, option := range optionsStrs {
+			fn, err := parseProcessOption(option)
+			if err != nil {
+				return nil, err
+			}
 
-		fns = append(fns, fn)
+			fns = append(fns, fn)
+		}
 	}
 
 	return fns, nil
