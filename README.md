@@ -36,6 +36,9 @@ Banco de dados:
 
 A qualquer momento, é possível alterar (ambiente local) ou sobrescrever (container Docker) o arquivo de configurações da aplicação (config.yaml). No segundo caso, o arquivo deve ser colocado em `/config.yaml`.
 
+## Testando a API:
+- Collection do Postman: https://www.getpostman.com/collections/7b990050d4256980dddc
+
 ## Funcionalidades:
 
 ### Definições
