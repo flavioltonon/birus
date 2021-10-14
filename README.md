@@ -40,7 +40,7 @@ A qualquer momento, é possível alterar (ambiente local) ou sobrescrever (conta
 
 ### Definições
 
-- Classifier:
+- Classifier: é um classificador de textos para um tipo de documento específico (ex: cupons fiscais eletrônicos, RGs, ou livros do Tolkien)
 ```
 {
     "id": string,
@@ -48,7 +48,7 @@ A qualquer momento, é possível alterar (ambiente local) ou sobrescrever (conta
 }
 ```
 
-- Score:
+- Score: é o resultado da classificação de um texto. O grau de confiança no resultado (confidence) pode variar entre 0 e 100.
 ```
 {
     "name": string,
@@ -61,6 +61,7 @@ A qualquer momento, é possível alterar (ambiente local) ou sobrescrever (conta
 **Request**
 ```
 POST /api/text-classification/classifiers
+Content-Type: application/json
 {
     "name": string // obrigatório
     "texts": []string  // obrigatório
@@ -99,6 +100,7 @@ Status: 201
 
 ```
 GET /api/text-classification/classifiers
+Content-Type: application/json
 ```
 
 **Response**
@@ -125,6 +127,7 @@ Status: 200
 
 ```
 DELETE /api/text-classification/classifiers/:classifier_id
+Content-Type: application/json
 ```
 
 **Response**
@@ -164,6 +167,7 @@ Status: 204
 
 ```
 POST /api/text-classification/classify
+Content-Type: application/json
 {
     "text": string // obrigatório
 }
@@ -192,5 +196,141 @@ Status: 500
 Status: 200
 {
     "result": <score>
+}
+```
+
+### Processar uma imagem:
+
+**Request**
+
+```
+POST /api/ocr/read
+
+1) Content-Type: application/json
+{
+    "base64": string // obrigatório
+    "options": string // opcional; exemplo: "grayscale;resize:1080,720;adjust-contrast:50;adjust-brightness:50;blur:2.5;sharpen:1.2" 
+}
+
+2) Content-Type: multipart/form-data
+- file: multipart file // obrigatório
+- options: string // opcional; exemplo: "grayscale;resize:1080,720;adjust-contrast:50;adjust-brightness:50;blur:2.5;sharpen:1.2" 
+```
+
+**Response**
+
+> Cenário: parâmetros de URL inválidos
+```
+Status: 400
+{
+    "error": string
+}
+```
+
+> Cenário: erros internos
+```
+Status: 500
+{
+    "error": string
+}
+```
+
+> Cenário: texto extraído com sucesso
+```
+Status: 200
+{
+    "image": {
+        "base64": string
+    }
+}
+
+// Obs: Caso a API esteja rodando em modo development (ocr.development_mode: true), a imagem resultante será gravada no diretório /output/image.jpg
+```
+
+### Extrair texto de uma imagem (OCR):
+
+**Request**
+
+```
+POST /api/ocr/read
+
+1) Content-Type: application/json
+{
+    "base64": string // obrigatório
+    "options": string // opcional; exemplo: "grayscale;resize:1080,720;adjust-contrast:50;adjust-brightness:50;blur:2.5;sharpen:1.2" 
+}
+
+2) Content-Type: multipart/form-data
+- file: multipart file // obrigatório
+- options: string // opcional; exemplo: "grayscale;resize:1080,720;adjust-contrast:50;adjust-brightness:50;blur:2.5;sharpen:1.2" 
+```
+
+**Response**
+
+> Cenário: parâmetros de URL inválidos
+```
+Status: 400
+{
+    "error": string
+}
+```
+
+> Cenário: erros internos
+```
+Status: 500
+{
+    "error": string
+}
+```
+
+> Cenário: texto extraído com sucesso
+```
+Status: 200
+{
+    "text": string
+}
+```
+
+### Extrair texto de várias imagens (OCR):
+
+**Request**
+
+```
+POST /api/ocr/read/batch
+
+1) Content-Type: application/json
+{
+    "base64_list": []string // obrigatório
+    "options": string // opcional; exemplo: "grayscale;resize:1080,720;adjust-contrast:50;adjust-brightness:50;blur:2.5;sharpen:1.2" 
+}
+
+2) Content-Type: multipart/form-data
+- files: []multipart file // obrigatório
+- options: string // opcional; exemplo: "grayscale;resize:1080,720;adjust-contrast:50;adjust-brightness:50;blur:2.5;sharpen:1.2" 
+```
+
+**Response**
+
+> Cenário: parâmetros de URL inválidos
+```
+Status: 400
+{
+    "error": string
+}
+```
+
+> Cenário: erros internos
+```
+Status: 500
+{
+    "error": string
+}
+```
+
+> Cenário: texto extraído com sucesso
+```
+Status: 200
+{
+    "texts": []string
 }
 ```
